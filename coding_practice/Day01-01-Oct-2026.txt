@@ -1,0 +1,18 @@
+- name: Insatall nginx on Pthnex server
+    hosts: all
+    become: yes
+
+    tasks:
+      - name: Insatall nginx
+        yum:
+          name: nginx
+          state: present
+
+#Docker 
+#Docker Installation & First Container
+docker --version
+docker run ubuntu echo "Hello Pathnex"
+
+#Docker file
+FROM ubuntu:22.04
+CMD ["echo", "Hello Pathnex"]
