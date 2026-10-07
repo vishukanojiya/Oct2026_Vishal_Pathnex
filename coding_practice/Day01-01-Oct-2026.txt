@@ -12,10 +12,19 @@
       yum:
         name: nginx
         state: present
+       
+    
+ #Docker
+#Docker Installation & First Container
 
+docker --version
+docker run ubuntu echo "Hello Pathnex"
+
+# Docker file
+FROM ubuntu:22.04
+CMD ["echo", "Hello Pathnex"]
 
 #Docker
-
 #Docker Installation & First Container
 
 docker --version
