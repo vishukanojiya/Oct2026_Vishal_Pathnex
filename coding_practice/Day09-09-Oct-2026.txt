@@ -67,5 +67,36 @@ spec:
     name: pathnex-deployment
   minReplicas: 1
   maxReplicas: 10
+  targetCPUUtilicationPercentage: 50
 
-  
+#Jenkinsfile - Deploy to Kubernetes
+pipeline
+  agent any
+    stages{
+        stage  ('Deploy to kubernetes') {
+            steps{
+                script {
+                    sh 'kubernetes apply -f deployment.yaml'
+                }
+
+            }
+        }
+    }  
+
+#GitLab CI/CD - Deploy to kubernetes
+stages:
+  - deploy
+
+  deploy:
+    stages: deploy
+    script:
+      - kubectl apply -f kubebenetes/deployment.yaml
+
+#Docker
+
+#Environment Variable
+
+FROM ubuntu:22.04
+ENV INSTITUTE=pathnex
+ENV cource=Devops
+CMD echo "$INSTITUTE - $COURCE"
