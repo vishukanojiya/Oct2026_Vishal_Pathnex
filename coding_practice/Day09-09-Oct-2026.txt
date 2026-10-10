@@ -1,0 +1,102 @@
+#Day 09 - DOcker Integration with Jenkins and gitlab
+#Ansible - setup Docker container for nginx
+
+-name: setup Docker container for nginx
+hosts: all
+become: yes
+tasks:
+  - name: pull nginx image
+    docker_image:
+      name: nginx
+      source: pull
+  - name : Run nginx container
+    docker_container:
+      name: nginx-container
+      image: nginx
+      state: startedd
+      punlished_port
+        - "8080:80"
+
+#Terraform - EC2 with auto scaling group
+
+resource "aws_launch_configuration" "example" {
+    name = "Ecample-config"
+    image_id = ""
+    instance_type = "t2.medium"
+}
+
+resource "aws_autoscaling_group" "example" {
+    desired_capicity = 2
+    max_size         = 3
+    min_size         = 1
+    vpc_zone_identifier = ["subnet-12345678"]
+    launch_configuration = aws_launch_configuration.id
+}
+
+#Kubernetes - Horizontal pod autoscaler (HPA)
+apiVersion: app/v1
+kind: deployment
+metadata: 
+  name: pathnex-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pathnex-app
+    templete:
+      metadata:
+        labels:
+          app: pathnex-app
+      spec:
+        containers:
+          - name: nginx
+            image: nginx
+            port:
+              - containerPort: 80
+
+---
+
+apiVersion: app/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pathnex-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: app/v1
+    kind: deployment
+    name: pathnex-deployment
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilicationPercentage: 50
+
+#Jenkinsfile - Deploy to Kubernetes
+pipeline
+  agent any
+    stages{
+        stage  ('Deploy to kubernetes') {
+            steps{
+                script {
+                    sh 'kubernetes apply -f deployment.yaml'
+                }
+
+            }
+        }
+    }  
+
+#GitLab CI/CD - Deploy to kubernetes
+stages:
+  - deploy
+
+  deploy:
+    stages: deploy
+    script:
+      - kubectl apply -f kubebenetes/deployment.yaml
+
+#Docker
+
+#Environment Variable
+
+FROM ubuntu:22.04
+ENV INSTITUTE=pathnex
+ENV cource=Devops
+CMD echo "$INSTITUTE - $COURCE"
