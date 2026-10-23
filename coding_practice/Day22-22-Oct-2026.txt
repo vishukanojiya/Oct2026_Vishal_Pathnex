@@ -1,0 +1,131 @@
+#Day- 22 Multi-Cluster Kubernetes Management
+
+#Ansible - Deploying Nginx across multiple Kubernetes clusters
+
+- name: Dploying nginx across multiple kubernetes clusters
+  hosts: localhost
+  tasks:
+    - name: configure kubectl for cluster 1
+      command: kubectl --context=us-east config use-context us-east-cluster
+    - name: Deploy nignx on cluster 1
+      command: kubectl apply -f kubernetes/deploment.yaml
+    - name: configure kubectl for cluster 2
+      command: kubectl --context=us-west config use-context us-west-cluster
+    - name: configure kubeclt cluster 2
+      command: kubectl apply -f kubernetes/deploment.yaml
+
+#Terraform - Multi-region Kubernetes Cluster with EKS and GKE
+resource "aws_eks_cluster" "pathnex_eks" {
+    name           = "pathnex-eks-pathnex"
+    role_arn       = aws_iam_role.eks_cluster_role.arn
+
+    vpc_config {
+        subent_ids  =   [aws_subnet.pathnex_subnet.id]
+    }
+
+    depends_on  =  [aws_iam_role_policy_attachment.eks_cluster_role_policy]
+}
+
+resource "google_contaienr_cluster" "pathnex_gke" {
+    name    =   "pathnex-gke-cluster"
+    location = "us-central1-a"
+    initial_node_count  =   3
+    node_config {
+        machine_type = "n1-standard-1"
+    }
+}
+
+#Kubernetes - Federated Deployment with Multiple clusters
+
+apiVersion: app/v1
+kind: Deployment
+metadata:
+  name: pathnex-Deployment
+spec:
+  replicas: 3
+  selectors:
+    matchLabels:
+      app: pathnex-app
+  templete:
+    metadata:
+      labels:
+        app: pathnex-app
+    spec:
+      conteriners:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+---
+apiVersion: federation.k8s.io/v1beta1
+kind: FederatedDeployment
+metadata: 
+  name: pathnex-federated-deployment
+  namespce: default
+spec:
+  templete:
+    spec:
+      replicas: 3
+      selectors:
+        matchLabels:
+          app: pathnex-app
+      templete:
+        metadata:
+          labels:
+            app: pathnex-app
+        spec:
+          containers:
+            - name: nginx
+              image: nginx
+              ports:
+                - containerPort: 80
+
+#JenkinsFile - multi-Cluster Deployment strategy
+pipeline {
+    agent any
+    stages {
+        stage('Deploy cluster 1') {
+            steps {
+                script {
+                    sh 'kubectl --context=us-east-cluster apply -f kubernetes/deployment.yaml'
+                }
+            }
+        }
+        stage(Deploy cluster 2) {
+            steps {
+                script {
+                    sh 'kubectl --context=us-east-cluster apply -f kubernetes/deployment.yaml'
+                }
+            }
+        }
+    }
+}
+
+#GitLab CI/CD - Multi-Cluster Deployment strategy
+
+stages:
+  - deploy
+
+  deploy_cluster_1:
+    stage: deploy
+    script:
+      - kubectl --context=us-east-cluster apply -f kubernetes/deployment.yaml
+
+    deploy_cluster_2:
+      stage: deploy
+      script:
+        - kubectl --context=us-west-cluster apply -f kubernetes/deployment.yaml
+
+
+#Docker with Mysql
+
+version: '3'
+services:
+  db:
+    image: Mysql:8
+    container_name: pathnex-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+  web:
+    image: nginx
+    container_name: pathnex-web
