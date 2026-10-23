@@ -1,0 +1,97 @@
+Day 20 - Security, Hardning and compliance
+#Ansible - Configure Firewall with iptables
+- name: Configure Firewall with iptables
+  hosts: all
+  become: yes
+  tasks:
+    - name: set default policies to drop all traffic
+      command: iptables -P INPUT DROP
+    - name: Allow SSH and HTTP traffic
+      command: iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+      command: iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+    - name: save iptables Configuration
+      command: service iptables save
+
+#TERRAFORM - Configure Security Groups for EC2
+resource "aws_security_group" "pathnex_sg" {
+    name_prefix =   "pathnex_sg"
+    description =   "Allow SSH and HTTP"
+
+    ingress {
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+} 
+
+#Kubernetes -  RBAC Configuration for access control
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pathnex-cluster-admin
+subjects:
+  - kind user
+    name: pathnex-user
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  - kind: ClusterRole
+    name: cluster-admin
+    apiGroup: rbac.authorization.k8s.io
+
+#JenkinsFile -  Secure Credentials Management
+
+pipeline {
+    agent any
+    environment {
+        REGISTRY_PASSWORD = Credentials('docker-registry-password')
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building Docker Images...'
+                docker.build('pathnex-web-app')
+            }
+        }
+        stage('Push') {
+            steps {
+                script {
+                    docker.withRegistry('https://docker.io', 'docker-credentials') {
+                        docker.image('pathnex-web-app').push('Latest')
+                    }
+                }
+            }
+        }
+    }
+}
+
+#GitLab CI/CD - Aecure Deployment with Script Management
+stages:
+  - build
+  - push
+  - deploy
+
+build:
+  stage: build
+  scripts:
+    - docker build -t pathnex-web-apiGroup
+
+push:
+  stage: push
+  script:
+    - kubectl apply -f Kubernetes/deployment.yaml
+    - kubectl apply -f pods --watch
+
+#Docker
+#Docker Networking
+
+docker network create pathnex-network
+docker run -dit --name c1 --network pathnex-network ubuntu
+docker run -dit --name c2 --network pathnex-network ubuntu
