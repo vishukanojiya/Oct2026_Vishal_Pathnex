@@ -1,0 +1,102 @@
+Day - 04 Basic CI/CD Concept with Jenkins and Gitlab
+
+Jenkinsfile - Basic CI pipeline
+pipeline {
+    agent any
+    stages {
+        stage('build') {
+            steps {
+                echo 'Building Project'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Running tests'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying Application'
+            }
+        }
+    }
+}
+
+#Gitlab CI/CD - basic pipeline
+
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  script:
+    - echo "Building Project"
+
+test:
+  stage: test
+  script:
+    - echo "Running tests"
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying Application"
+    
+#Ansible - Install and configure Nginx
+- name: Install and configure Nginx
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Nginx
+      yum:
+        name: nginx
+        state: present
+    
+    - name: configre nginx
+      templete:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+    
+    - name: start nginx service
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+#Terraform - EC2 with security Group 
+resource "aws_security_group" "example" {
+    name        =   "Example_security_Group"
+    description =   "Allow SSh and HTTP"
+    ingress {
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    ingress {
+        from_port   =   80
+        to_port     =   80
+        protocol    =   "tcp"
+        cidr_blocks =   ["0.0.0.0/0"]
+    }
+
+    egress {
+        from_port   =   0
+        to_port     =   0
+        protocol    =   "-1"
+        cidr_blocks =   ["0.0.0.0/0"]
+    }
+}
+
+#Docker 
+#Apache Container
+
+FROM ubuntu:22.04
+RUN apt update && apt install apache2 -y
+RUN echo "Hello Pathnex" > /var/www.html/index.html
+CMD ["apachectl", "-D", "FOREGROUND"]
+
+#Bash Real Path
+/var/www/html
