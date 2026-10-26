@@ -1,0 +1,123 @@
+#Day 25 COntinuous monitoring and alerts
+
+# Ansible - Setup Prometheus Node exporter for monitoring
+
+'''yaml
+- name: setup prometheus Node exporter
+  hosts: all
+  become: yes
+  tasks:
+    - name: install prometheus Node exporter
+      yum:
+        name: prometheus-node-exporter
+        state: present
+    - name: Start prometheus node exporter service
+      service:
+        - name: prometheus-node-exporter
+          state: started
+          enabled: yes
+
+#Terraform - Create Cloudwatch Alerts
+
+resource "aws_cloudwatch-matric_alarm" "pathnex_cpu_alerm" {
+    alerm_name = "pathnex_cpu_alerm_high"
+    comparison_operator = "GreaterThanThreshold"
+    evaluation_periods = "1"
+    matric_name = "CPUUtilization"
+    namespace = "AWS/EC2"
+    period = "60"
+    statistic = "Average"
+    threshold = "80"
+
+    dimensions = {
+        InstanceId = aws_instance.pathnex.ex2.id
+    }
+    alerm_action = [aws_sns_topic.pathnex_alerts.arn]
+}
+
+resource "aws_sns_topic" "pathnex_alerts" {
+    name = "pathnex_alerts"
+}
+
+#Kubernetes - Setup Prometheus and grafana
+apiVersion: app/v1
+kind: Deployment
+metadata:
+  app: prometheus
+spec:
+  replicas: 1
+  selectors:
+    matchLabels:
+      app: prometheus
+  templete:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      contaiers:
+        - name: prometheus
+          image: prom/prometheus:latest
+          ports:
+            - containerPort: 9090
+---
+apiVersion: app/v1
+kind: Deployment
+metadata:
+  name: grafana
+spec:
+  replicas: 1
+  selectors:
+    matchLabels:
+      app: grafana
+  templete:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          ports:
+            - containerPort: 3000
+
+#JenkinsFile - COntinuous monitoring and alerts in CI pipeline
+pipeline {
+    agent any
+    stages {
+        stage('Monitor') {
+            steps {
+                script {
+                    echo 'Triggering CloudWatch alerms if CPU exceeds 80%'
+                    sh 'aws CloudWatch put-matric-data --namespace "AWS/EC2" matric-name "CPUUtilization" --value 90'
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Running tests'
+            }
+        }
+    }
+}
+
+#Gitlab CI/CD - Monitoring and alerting in CI/CD pipeline
+stages:
+  - Monitor
+  - tests
+
+  monitor:
+    stage: monitor
+    script:
+      - aws CloudWatch put-matrix-data --namespace "AWS/EC2" --matric-name "CPUUtilization" -- value 90
+
+  test:
+    stage: test
+    script:
+      - echo "Running test"
+
+#Docker
+
+#.dockerignore file
+node_modules
+.git
+temp
